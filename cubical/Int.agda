@@ -5,7 +5,7 @@ open import Agda.Builtin.Nat
 
 
 module Int where
-
+variable l1 : Level
 Int : Type
 Int = Nat ⊎ ⊤ ⊎ Nat
 
@@ -42,8 +42,15 @@ predInt (inr (inr (suc x))) = inr (inr x)
 η (inr (inl tt)) = refl
 η (inr (inr x)) = refl
 
+
 lemma : (x : Int) → (y : fiber sucInt x) → (predInt x , ϵ x) ≡ y
-lemma x (y , p) = λ i ->  {!!} , {!!}
+lemma x (y , p) = J _ (λ x p → (predInt x , ϵ x) ≡ (y , p) ) (helper y) x p
+  where
+    helper : (y : Int) → (predInt (sucInt y) , ϵ (sucInt y)) ≡ (y , (λ _ → sucInt y))
+    helper (inl zero) = refl
+    helper (inl (suc y)) = refl
+    helper (inr (inl tt)) = refl
+    helper (inr (inr y)) = refl
 
 -- (ap predInt p)
 -- i = 0 -> predInt (sucInt y)
@@ -65,6 +72,50 @@ lemma x (y , p) = λ i ->  {!!} , {!!}
 suc-eqv : Int ≃ Int
 suc-eqv .fst = sucInt
 suc-eqv .snd .equiv-proof x = ((predInt x) , ϵ x), lemma x
+
+
+module _ {P : Int -> Type l1} (z* : P zero-int)
+         (e* : (m : Int) -> P m ≃ P (fst suc-eqv m)) where
+  ind-int : (m : Int) -> P m
+  ind-int (inl (suc m)) = fst (fst(equiv-proof (snd (e* (inl (suc m))))(ind-int (inl m))))
+  ind-int (inl zero) =  fst (fst (equiv-proof (snd (e* (inl zero))) z*))
+  ind-int (inr (inl tt)) = z*
+  ind-int (inr (inr zero)) =  fst (e* (inr (inl tt))) (z*)
+  ind-int (inr (inr (suc m))) = fst (e* (inr (inr m))) (ind-int (inr (inr m)))
+
+  ind-int-zero : ind-int zero-int ≡ z*
+  ind-int-zero = refl
+
+  ind-int-e : (m : Int) -> ind-int ((fst) suc-eqv m) ≡ (fst) (e* m) (ind-int m)
+  ind-int-e (inl (suc m)) = ! (snd (fst ((equiv-proof (snd (e* (inl (suc m))))) (ind-int (inl m))) ))
+  ind-int-e (inl zero) = ! (snd (fst ((equiv-proof (snd (e* (inl zero))) (z*)) )))
+  ind-int-e (inr (inl tt)) = refl
+  ind-int-e (inr (inr zero)) = refl
+  ind-int-e (inr (inr (suc m))) = refl
+
+
+module _ {Y : Type l1} (z* : Y) (e* : Y ≃ Y) where
+  rec-int : Int -> Y
+  rec-int = ind-int {P = λ _ -> Y} z* (λ _ -> e*)
+
+  rec-int-zero : rec-int zero-int ≡ z*
+  rec-int-zero = refl
+
+  rec-int-e : (m : Int) -> rec-int ( (fst suc-eqv) m) ≡ fst e* (rec-int m)
+  rec-int-e = ind-int-e z* (λ _ -> e*)
+
+  -- rec-int-ε : (m : Int) -> rec-int m ≡ f e* (rec-int (g suc-eqv m))
+  -- rec-int-ε m = ap rec-int (! (ε' suc-eqv m)) • rec-int-e (g suc-eqv m)
+
+  -- rec-int-!e : (m : Int) -> rec-int (g suc-eqv m) ≡ g e* (rec-int m)
+  -- rec-int-!e m = f (adj e*) (! (rec-int-e (g suc-eqv m))) •
+  --                ap (λ n -> g e* (rec-int n)) (ε' suc-eqv m)
+
+  -- rec-int-η : (m : Int) -> rec-int m ≡ g e* (rec-int (f suc-eqv m))
+  -- rec-int-η m = ap rec-int (! (η suc-eqv m)) • rec-int-!e (f suc-eqv m)
+
+
+
 
 -- module _ {P : Int -> Type l1} (z* : P zero-int)
 --          (e* : (m : Int) -> P m ≃ P (f suc-eqv m)) where

@@ -6,7 +6,10 @@ open import Agda.Primitive public
 open import Cubical.Core.Primitives public
 open import Cubical.Core.Glue public
 open import Agda.Builtin.Cubical.Equiv public
+open import Cubical.Foundations.Equiv.Base using (idEquiv) public
 open Helpers using (isContr; fiber) public
+
+variable ℓ ℓ' : Level
 
 module _ {ℓ : Level} where
   coe : {X Y : Type ℓ} -> Path _ X Y -> X -> Y
@@ -54,8 +57,27 @@ module _ {ℓ ℓ' : Level} {X : Type ℓ} (x0 : X) where
   J P r x1 p = coed x0 P p (λ i → P (p i) (λ j → p (i ∧ j))) r
 
 infix 10 !_
-!_ : {ℓ : Level} {A : Type ℓ} {x y : A} →  ( x ≡ y ) →  y ≡ x
+!_ : {A : Type ℓ} {x y : A} →  ( x ≡ y ) →  y ≡ x
 ! p = λ i → p (~ i)
+
+infixr 8 _•_
+_•_ : {A : Type ℓ} {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+( p • q ) i  = hcomp (λ j → λ { (i = i0 ) → p i0; (i = i1 ) → q j }) (p i)
+
+unitr : {A : Type ℓ} {x y : A} (p : x ≡ y ) → p ≡ p • refl {x = y}
+unitr {A = A} {x = x} {y = y}  p  j i = hfill (λ _ → λ { (i = i0 ) → x ; (i = i1 ) → y }) (inS (p i)) (j)
+
+unitl : {A : Type ℓ} {x y : A} (p : x ≡ y) → p ≡ refl • p
+unitl { A = A } { x = x } { y = y } p = J x ( λ y → λ q → q ≡ refl • q ) (unitr refl) y p
+
+invl : {A : Type ℓ} {x y : A} (p : x ≡ y) → ! p • p ≡ refl
+invl {x = x} {y = y} p = J x (λ y → λ q → ! q • q ≡ refl) (! (unitr refl)) y p
+
+invr : { A : Type ℓ } { x y : A } (p : x ≡ y) → p • ! p ≡ refl
+invr {x = x} {y = y} p = J x ( λ y → λ q → q • ! q ≡ refl ) (! (unitl refl)) y p
+
+
+
 
 pathComp : {ℓ : Level} {A : Type ℓ} {x y z : A } → (p : x ≡ y) → (q : y ≡ z) → x ≡ z
 pathComp {x = x} p q i = hcomp (λ j → λ {(i = i0) → x ; (i = i1) → q j}) (p i)
@@ -134,5 +156,14 @@ module _ {X Y : Type} where
 -- dec-eq : {X : Type} -> (x1 x2 : X) -> (x1 ≡ x2) ⊎ (x1 ≡ x2 -> ⊥)
 -- dec-eq {X} x1 x2 = {!!}
 
+rcomp-eqv : {X : Type} {x1 x2 : X} → (p1 : x1 ≡ x2) → {x3 : X} → (x3 ≡ x1) ≃ (x3 ≡ x2)
+rcomp-eqv {X = X} {x1 = x1} {x2 = x2} = J _ (λ x _ →  {x3 : X} → (x3 ≡ x1) ≃ (x3 ≡ x)) (λ { x3 } →  idEquiv (x3 ≡ x1)) x2
 has-dec-eq : (X : Type) -> Type
 has-dec-eq X = (x1 x2 : X) -> (x1 ≡ x2) ⊎ (x1 ≡ x2 -> ⊥)
+
+
+Path-to-PathP : {ℓ : Level} → (A : I → Type ℓ) → (u : A i0) → (v : A i1) → transp A i0 u ≡ v → PathP A u v
+Path-to-PathP A u v x = J (transp A i0 u) (λ v _ → PathP A u v) (λ i → transp (λ j → A (i ∧ j)) (~ i) u) v x
+
+tpt-in-iden : {ℓ : Level} → {X : Type ℓ} → {s t x : X} → (a : x ≡ s) → (p : s ≡ t) → transp (λ i → x ≡ p (i)) i0 a ≡ a • p
+tpt-in-iden a p = J ((p i0)) (λ x p → transp (λ i → (a i0) ≡ p (i)) i0 a ≡ a • p ) ((λ i → transp (λ j → (a i0) ≡ (a i1)) i a ) • unitr a) (p(i1)) p

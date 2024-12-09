@@ -34,9 +34,9 @@ assoc {z = z} {w = w} p q r = J z (λ y p' → pathComp p (pathComp q p') ≡ pa
 -- Ω2 : {l : Level} {A : Type l} {a : A} → refl ≡ refl
 -- Ω2 = {!refl!}
 
-infixr 8 _•l_
-_•l_ : {l : Level} {A : Type l} {x y z : A} → {p q : x ≡ y} (α : p ≡ q) → (r : y ≡ z) → pathComp p r ≡ pathComp q r
-(α •l r) = J {!_!} (λ y q' → {!!}) {!!} {!!} {!!}
+-- infixr 8 _•l_
+-- _•l_ : {l : Level} {A : Type l} {x y z : A} → {p q : x ≡ y} (α : p ≡ q) → (r : y ≡ z) → pathComp p r ≡ pathComp q r
+-- (α •l r) = J {!_!} (λ y q' → {!!}) {!!} {!!} {!!}
 
-eckman-hilton : {l : Level} {A : Type l} {a : A} (α : refl {x = a} ≡ refl) → (β : refl ≡ refl) → pathComp α β ≡ pathComp β α
-eckman-hilton α β  = {!!}
+-- eckman-hilton : {l : Level} {A : Type l} {a : A} (α : refl {x = a} ≡ refl) → (β : refl ≡ refl) → pathComp α β ≡ pathComp β α
+-- eckman-hilton α β  = {!!}
